@@ -58,7 +58,7 @@
         #error-message { color: #ef4444; display: none; font-weight: bold; margin-bottom: 15px; font-size: 14px; }
 
         /* =========================================
-           3. KART TASARIMI (Bordo Tema Korundu ve Canlandırıldı)
+           3. KART TASARIMI (MOR TEMA GERİ GETİRİLDİ)
         ========================================= */
         #comparison-wrapper { display: none; flex-direction: column; align-items: center; width: 100%; animation: fadeIn 0.5s ease-out; padding: 20px 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -66,10 +66,10 @@
         .cards-layout { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; position: relative; }
         @media(min-width: 768px) { .cards-layout { flex-direction: row; justify-content: center; align-items: stretch; gap: 40px; } }
 
-        /* KART ZEMİNİ VE KENARLIKLARI CANLANDIRILDI */
+        /* KART ZEMİNİ VE KENARLIKLARI SİTENİN ORİJİNAL MOR PALETİNE DÖNDÜRÜLDÜ */
         .player-card { 
-            background: linear-gradient(160deg, #3a0a0a, #0a0000); 
-            border: 1px solid rgba(185, 28, 28, 0.4); 
+            background: linear-gradient(160deg, #180a24, #000); 
+            border: 1px solid rgba(139, 92, 246, 0.3); 
             padding: 25px; border-radius: 28px; width: 100%; max-width: 380px; 
             text-align: left; position: relative; box-shadow: 0 15px 50px rgba(0,0,0,0.6);
             box-sizing: border-box; transition: transform 0.3s ease;
@@ -115,9 +115,9 @@
         ========================================= */
         .results-section { margin-top: 40px; width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
 
-        /* KAZANAN PANELİ KONTRASTI ARTIRILDI */
+        /* KAZANAN PANELİ ORİJİNAL MOR TEMA */
         .winner-panel {
-            background: linear-gradient(160deg, #3a0a0a, #0a0000); 
+            background: linear-gradient(160deg, #180a24, #000); 
             border: 1px solid rgba(139,92,246,0.8); 
             border-radius: 20px; 
             padding: 20px 25px; text-align: center; 
@@ -356,32 +356,35 @@ const ComparisonController = {
         actionBtns.style.display = 'none';
         document.body.classList.add('capture-mode');
 
-        html2canvas(wrapper, {
-            backgroundColor: "#0d0514", 
-            scale: 2, 
-            useCORS: true
-        }).then(canvas => {
-            // İşlem bitince butonları ve filtreyi geri getir
-            actionBtns.style.display = 'flex'; 
-            document.body.classList.remove('capture-mode');
-            
-            // İsimleri inputlardan temiz al
-            const n1 = document.getElementById('p1-input').value.trim();
-            const n2 = document.getElementById('p2-input').value.trim();
-            
-            // Dosya isminde hata yaratacak | gibi işaretleri temizle
-            const safeName = (name) => name.replace(/\|/g, '').trim().replace(/\s+/g, '_');
-            
-            const link = document.createElement('a');
-            link.download = `${safeName(n1)}_VS_${safeName(n2)}_Karsilastirma.png`;
-            link.href = canvas.toDataURL("image/png");
-            link.click();
-        }).catch(err => {
-            console.error("Görsel oluşturma hatası:", err);
-            actionBtns.style.display = 'flex';
-            document.body.classList.remove('capture-mode');
-            Utils.showError("Görsel oluşturulamadı.");
-        });
+        // Tarayıcının karanlık filtreyi sildiğini "anlayabilmesi" için ufak bir gecikme ekledik. (Hayalet/Karanlık çıkma sorununu kökten çözer)
+        setTimeout(() => {
+            html2canvas(wrapper, {
+                backgroundColor: "#0d0514", 
+                scale: 2, 
+                useCORS: true
+            }).then(canvas => {
+                // İşlem bitince butonları ve filtreyi geri getir
+                actionBtns.style.display = 'flex'; 
+                document.body.classList.remove('capture-mode');
+                
+                // İsimleri inputlardan temiz al
+                const n1 = document.getElementById('p1-input').value.trim();
+                const n2 = document.getElementById('p2-input').value.trim();
+                
+                // Dosya isminde hata yaratacak | gibi işaretleri temizle
+                const safeName = (name) => name.replace(/\|/g, '').trim().replace(/\s+/g, '_');
+                
+                const link = document.createElement('a');
+                link.download = `${safeName(n1)}_VS_${safeName(n2)}_Karsilastirma.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            }).catch(err => {
+                console.error("Görsel oluşturma hatası:", err);
+                actionBtns.style.display = 'flex';
+                document.body.classList.remove('capture-mode');
+                Utils.showError("Görsel oluşturulamadı.");
+            });
+        }, 100);
     }
 };
 
