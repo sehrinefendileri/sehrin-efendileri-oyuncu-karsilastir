@@ -83,9 +83,12 @@
 
         /* Nick ve Sunucu Bilgisi */
         .card-nick { 
-            text-align: center; color: #f3f4f6; font-size: 30px; font-weight: 950; margin: 0 0 5px 0; 
-            line-height: 1; text-transform: uppercase; text-shadow: 0 0 20px rgba(255, 255, 255, 0.3); word-break: break-all;
+            text-align: center; color: #ffffff; font-size: 30px; font-weight: 950; margin: 0 0 12px 0; 
+            line-height: 1.1; text-transform: uppercase; text-shadow: 0 4px 10px rgba(0, 0, 0, 0.8); word-break: break-word;
         }
+        /* Klan Tagı Vurgu Ayarı */
+        .clan-tag { font-weight: 300; color: #94a3b8; font-size: 0.65em; letter-spacing: 1px; }
+
         .card-server-info { text-align: center; color: #94a3b8; font-size: 10px; font-weight: 700; margin-bottom: 25px; letter-spacing: 1.2px; }
 
         /* İstatistik Satırları */
@@ -112,7 +115,7 @@
             width: 100%; box-sizing: border-box;
         }
         .winner-title { font-size: 16px; color: #facc15; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; }
-        .winner-name { font-size: 32px; color: #fff; font-weight: 950; text-transform: uppercase; text-shadow: 0 0 15px rgba(255,255,255,0.3); margin-bottom: 15px; line-height: 1; }
+        .winner-name { font-size: 32px; color: #fff; font-weight: 950; text-transform: uppercase; text-shadow: 0 4px 10px rgba(0,0,0,0.8); margin-bottom: 15px; line-height: 1.1; }
         
         .winner-score-label { font-size: 11px; color: #94a3b8; font-weight: 800; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; }
         .winner-score-val { font-size: 26px; color: #fff; font-weight: 950; margin-bottom: 15px; letter-spacing: 2px; }
@@ -176,7 +179,7 @@
             <div id="card-1" class="player-card">
                 <div id="p1-badges" class="badge-box"></div>
                 <h2 id="p1-nick" class="card-nick">-</h2>
-                <div class="card-server-info">SEHRİN EFENDİLERİ | 95.173.173.81</div>
+                <div class="card-server-info">SEHRİN EFENDİLERİ • 95.173.173.81</div>
                 <div id="p1-stats" class="stat-container"></div>
             </div>
 
@@ -185,7 +188,7 @@
             <div id="card-2" class="player-card">
                 <div id="p2-badges" class="badge-box"></div>
                 <h2 id="p2-nick" class="card-nick">-</h2>
-                <div class="card-server-info">SEHRİN EFENDİLERİ | 95.173.173.81</div>
+                <div class="card-server-info">SEHRİN EFENDİLERİ • 95.173.173.81</div>
                 <div id="p2-stats" class="stat-container"></div>
             </div>
         </div>
@@ -223,7 +226,6 @@ const CONFIG = {
     SUPABASE_KEY: "sb_publishable_9iHDw5_WEWyNnCz_wXIMuA_VPt36UTL",
     
     STAT_KEYS: ['kd', 'kills', 'dmg', 'hs', 'deaths'],
-    // Skorların ekranda gösterilen 5 kritere tam uyumlu olması için puanlar 1'e eşitlendi.
     WEIGHTS: { kd: 1, kills: 1, dmg: 1, hs: 1, deaths: 1 }, 
     INVERSE: { deaths: true },
     
@@ -265,6 +267,14 @@ const Utils = {
             if (progress < 1) window.requestAnimationFrame(step);
         };
         window.requestAnimationFrame(step);
+    },
+    // Klan tagını otomatik hafifleştiren formül
+    formatNick: (nick) => {
+        const regex = /(\|\s*EFEND[İI]\s*\|)/i;
+        if(regex.test(nick)) {
+            return nick.replace(regex, '<span class="clan-tag">$1</span>');
+        }
+        return nick;
     }
 };
 
@@ -275,23 +285,21 @@ const Utils = {
  */
 const ComparisonController = {
     init: () => {
-        // Form alanlarını sıfırla
         document.getElementById('p1-input').value = "";
         document.getElementById('p2-input').value = "";
 
-        // URL parametrelerini oku
+        // URL parametrelerini tam ve doğru olarak oku
         const urlParams = new URLSearchParams(window.location.search);
-        const p1 = urlParams.get('p1'), p2 = urlParams.get('p2');
+        const p1 = urlParams.get('p1'); 
+        const p2 = urlParams.get('p2');
 
-        // Sayfa yenilendiğinde tekrar tetiklenmemesi için URL'yi hemen temizle
         if (window.history.replaceState) {
             window.history.replaceState({}, document.title, window.location.pathname);
         }
 
-        // Eğer paylaşılmış link ile gelindiyse sorgulamayı başlat
         if (p1 && p2) {
-            document.getElementById('p1-input').value = p1;
-            document.getElementById('p2-input').value = p2;
+            document.getElementById('p1-input').value = p1.trim();
+            document.getElementById('p2-input').value = p2.trim();
             ComparisonController.start(true);
         }
     },
@@ -321,10 +329,10 @@ const ComparisonController = {
     },
 
     copyShareLink: () => {
-        const n1 = document.getElementById('p1-nick').innerText;
-        const n2 = document.getElementById('p2-nick').innerText;
+        // İsimleri input'tan almak, etiketlerden oluşabilecek HTML boşluklarını önler
+        const n1 = document.getElementById('p1-input').value.trim();
+        const n2 = document.getElementById('p2-input').value.trim();
         
-        // Link oluştururken encode ederek parametreleri ekle
         const url = window.location.origin + window.location.pathname + `?p1=${encodeURIComponent(n1)}&p2=${encodeURIComponent(n2)}`;
         
         navigator.clipboard.writeText(url).then(() => alert("Karşılaştırma linki kopyalandı!"));
@@ -334,22 +342,24 @@ const ComparisonController = {
         const wrapper = document.getElementById('comparison-wrapper');
         const actionBtns = document.querySelector('.action-buttons');
         
-        // Görüntü alınırken butonları geçici olarak gizle
         actionBtns.style.display = 'none';
 
-        // Arka plana tema rengi vererek şeffaflığı önle
         html2canvas(wrapper, {
             backgroundColor: "#0d0514", 
             scale: 2, 
             useCORS: true
         }).then(canvas => {
-            actionBtns.style.display = 'flex'; // Butonları geri getir
+            actionBtns.style.display = 'flex'; 
             
-            const n1 = document.getElementById('p1-nick').innerText;
-            const n2 = document.getElementById('p2-nick').innerText;
+            // İsimleri inputlardan temiz al
+            const n1 = document.getElementById('p1-input').value.trim();
+            const n2 = document.getElementById('p2-input').value.trim();
+            
+            // Dosya isminde hata yaratacak | gibi işaretleri temizle
+            const safeName = (name) => name.replace(/\|/g, '').trim().replace(/\s+/g, '_');
             
             const link = document.createElement('a');
-            link.download = `${n1}_VS_${n2}_Karşılaştırma.png`;
+            link.download = `${safeName(n1)}_VS_${safeName(n2)}_Karsilastirma.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
         }).catch(err => {
@@ -427,7 +437,9 @@ const RenderService = {
         
         ['p1', 'p2'].forEach((pKey) => {
             const player = pKey === 'p1' ? p1 : p2;
-            document.getElementById(`${pKey}-nick`).innerText = player.nick;
+            
+            // Formatlı (Klan tagı inceltilmiş) Nick yazdırımı
+            document.getElementById(`${pKey}-nick`).innerHTML = Utils.formatNick(player.nick);
             
             const badgesHTML = cats[pKey].slice(0, 3).map(k => `<span class="badge">${CONFIG.BADGES[k]}</span>`).join('');
             document.getElementById(`${pKey}-badges`).innerHTML = badgesHTML;
@@ -478,7 +490,8 @@ const RenderService = {
             return;
         }
 
-        nameEl.innerText = winnerNick;
+        // Kazanan ismini de aynı ince klan formatıyla basıyoruz
+        nameEl.innerHTML = Utils.formatNick(winnerNick);
 
         let checklistHTML = '';
         CONFIG.STAT_KEYS.forEach(key => {
@@ -497,7 +510,7 @@ const RenderService = {
         const totalCount = CONFIG.STAT_KEYS.length;
         summaryEl.innerText = `${totalCount} istatistiğin ${suffixes[wonCount] || wonCount} rakibinden üstün performans gösterdi.`;
 
-        analysisEl.innerHTML = `<strong>${winnerNick}</strong>, karşılaştırılan istatistiklerde rakibine göre daha yüksek genel performans gösterdi.`;
+        analysisEl.innerHTML = `<strong>${Utils.formatNick(winnerNick)}</strong>, karşılaştırılan istatistiklerde rakibine göre daha yüksek genel performans gösterdi.`;
     }
 };
 
