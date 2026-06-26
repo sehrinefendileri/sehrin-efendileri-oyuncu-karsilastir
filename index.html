@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Şehrin Efendileri - Oyuncu Kartı</title>
+
+    <meta property="og:title" content="Şehrin Efendileri - Oyuncu Kartı">
+    <meta property="og:description" content="Senin istatistiklerin sunucunun efendisi olmaya yetecek mi? Hemen sorgula ve meydan oku!">
+    <meta property="og:image" content="banner.jpg">
+    <meta property="og:type" content="website">
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        /* GENEL TASARIM */
+        body { 
+            background: url("banner.jpg") no-repeat center center fixed;
+            background-size: cover; color: #fff; font-family: 'Segoe UI', sans-serif; text-align: center;
+            padding: 10px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center;
+        }
+        body::before { content: ""; position: fixed; inset: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(10px); z-index: 0; }
+        .content-wrap { position: relative; z-index: 10; width: 100%; max-width: 450px; padding-top: 5px; }
+
+        /* BAŞLIK: Gümüş/Platin Efekti */
+        h1 { color: #e5e7eb; margin: 5px 0 15px 0; text-transform: uppercase; letter-spacing: 3px; font-size: 15px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+
+        /* ARAMA ALANI */
+        .search-box { margin-bottom: 20px; display: flex; justify-content: center; }
+        #nick-input { padding: 10px; border-radius: 8px 0 0 8px; border: 1px solid #7f1d1d; width: 170px; background: #000; color: #fff; outline: none; font-size: 13px; }
+        #search-btn { padding: 10px 18px; cursor: pointer; background: #7f1d1d; border: none; border-radius: 0 8px 8px 0; font-weight: 800; color: #fff; font-size: 13px; transition: 0.3s; }
+        #search-btn:hover { background: #991b1b; }
+
+        /* KART TASARIMI: Koyu Bordo Teması */
+        #card-wrapper { display: none; flex-direction: column; align-items: center; }
+        #player-card { 
+            background: linear-gradient(160deg, #1a0505, #000); 
+            border: 2px solid rgba(229, 231, 235, 0.15); 
+            padding: 25px; 
+            border-radius: 28px; 
+            width: 380px; 
+            text-align: left; 
+            position: relative; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+        }
+
+        /* ROZETLER: Gümüş Temalı */
+        .badge-box { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; min-height: 30px; }
+        .badge { 
+            font-size: 11px; 
+            padding: 5px 14px; 
+            border-radius: 8px; 
+            background: rgba(229, 231, 235, 0.1); 
+            color: #e5e7eb; 
+            font-weight: 900; 
+            border: 1px solid rgba(229, 231, 235, 0.3); 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+        }
+
+        /* ODAK NOKTASI: PARLAYAN GÜMÜŞ NICK */
+        #card-nick { 
+            text-align: center; 
+            color: #f3f4f6; 
+            font-size: 30px; 
+            font-weight: 950; 
+            margin: 0 0 45px 0; 
+            line-height: 1; 
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        }
+
+        .card-server-info { 
+            text-align: center; 
+            color: #94a3b8; 
+            font-size: 10px; 
+            font-weight: 700; 
+            margin-bottom: 25px; 
+            letter-spacing: 1.2px;
+        }
+
+        /* RANK TEMALARI: Kırmızı Tonları */
+        .theme-acemi { border-color: #4b5563 !important; }
+        .theme-yetenekli { border-color: #991b1b !important; box-shadow: 0 0 20px rgba(153, 27, 27, 0.3); }
+        .theme-usta { border-color: #ef4444 !important; box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); }
+        .theme-efsane { border-color: #ffffff !important; animation: glow 2s infinite alternate; }
+        @keyframes glow { from { box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); } to { box-shadow: 0 0 35px rgba(185, 28, 28, 0.6); } }
+
+        #card-rank { text-align: center; font-size: 22px; font-weight: 900; margin-bottom: 4px; letter-spacing: 2px; color: #f3f4f6; }
+        #card-brag { text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 20px; font-style: italic; }
+
+        .kd-box { background: rgba(127, 29, 29, 0.15); border-radius: 18px; padding: 12px; margin-bottom: 18px; text-align: center; border: 1px solid rgba(127, 29, 29, 0.3); }
+        #card-kd { font-size: 52px; font-weight: 950; display: block; line-height: 1; color: #f3f4f6; }
+
+        .stat-row { display: flex; justify-content: space-between; margin: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; font-size: 14px; }
+        .stat-row b { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .stat-row span { font-weight: 800; color: #eee; }
+
+        /* AKSİYON BUTONLARI */
+        .challenge-text { color: #94a3b8; font-size: 11px; font-weight: 800; margin: 12px 0; font-style: italic; }
+        .action-buttons { display: flex; gap: 10px; width: 380px; }
+        .btn-action { 
+            flex: 1; 
+            padding: 12px 5px; 
+            border-radius: 12px; 
+            font-weight: 800; 
+            cursor: pointer; 
+            font-size: 10px; 
+            transition: 0.2s;
+            background: #000;
+            border: 2px solid rgba(255,255,255,0.15);
+            color: #fff;
+        }
+        .btn-insta { border-color: #b91c1c; color: #f3f4f6; background: #7f1d1d; }
+        .btn-discord { border-color: #4b5563; color: #f3f4f6; }
+        .btn-action:hover { transform: translateY(-2px); filter: brightness(1.2); }
+    </style>
+</head>
+
+<body>
+<div class="content-wrap">
+    <h1>OYUNCU KARTI SORGULA</h1>
+    <div class="search-box">
+        <input id="nick-input" placeholder="Nick yazınız...">
+        <button id="search-btn" onclick="fetchPlayerStats()">Sorgula</button>
+    </div>
+
+    <div id="error-message" style="color: #ef4444; display: none; font-weight: bold; margin-bottom: 15px;"></div>
+
+    <div id="card-wrapper">
+        <div id="player-card">
+            <div id="badge-box" class="badge-box"></div>
+            <h2 id="card-nick"></h2>
+            <div class="card-server-info">SEHRİN EFENDİLERİ | 95.173.173.81</div>
+            <div id="card-rank"></div>
+            <div id="card-brag"></div>
+            <div class="kd-box">
+                <span style="font-size: 9px; color: #94a3b8; letter-spacing: 1px; font-weight: 800;">K/D PERFORMANSI</span>
+                <span id="card-kd">0.00</span>
+            </div>
+            <div class="stat-row"><b>ÖLDÜRME</b> <span id="card-kills">0</span></div>
+            <div class="stat-row"><b>ÖLÜM</b> <span id="card-deaths">0</span></div>
+            <div class="stat-row"><b>HS ORANI</b> <span id="card-hs">%0</span></div>
+            <div class="stat-row"><b>TOPLAM HASAR</b> <span id="card-dmg">0</span></div>
+        </div>
+        
+        <div class="challenge-text">"Beni geçebilecek var mı? Paylaş ve meydan oku!"</div>
+        
+        <div class="action-buttons">
+            <button class="btn-action btn-insta" onclick="downloadCard()">INSTAGRAM İÇİN KAYDET</button>
+            <button class="btn-action btn-discord" onclick="copyShareLink()">DISCORD İÇİN KOPYALA</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const supabaseClient = window.supabase.createClient(
+    "https://ksevvntxdkuexulklmph.supabase.co",
+    "sb_publishable_9iHDw5_WEWyNnCz_wXIMuA_VPt36UTL"
+);
+
+document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const nickParam = urlParams.get('nick');
+    if (nickParam) {
+        document.getElementById('nick-input').value = nickParam;
+        fetchPlayerStats(nickParam);
+    }
+});
+
+function animateValue(obj, start, end, duration, isFloat = false, isPercent = false) {
+    let startTimestamp = null;
+    const step = (timestamp) => {
+        if (!startTimestamp) startTimestamp = timestamp;
+        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+        let val = progress * (end - start) + start;
+        let finalVal = isFloat ? val.toFixed(2) : Math.floor(val).toLocaleString();
+        obj.innerHTML = isPercent ? "%" + Math.floor(val) : finalVal;
+        if (progress < 1) window.requestAnimationFrame(step);
+    };
+    window.requestAnimationFrame(step);
+}
+
+let isLoading = false;
+async function fetchPlayerStats(overrideNick = null){
+    const input = overrideNick || document.getElementById('nick-input').value.trim();
+    if(!input || isLoading) return;
+
+    isLoading = true;
+    const btn = document.getElementById('search-btn');
+    btn.innerText = "...";
+    document.getElementById('error-message').style.display = "none";
+    document.getElementById('card-wrapper').style.display = "none";
+
+    try {
+        const { data, error } = await supabaseClient.rpc('search_player',{search_input:input});
+        if(error || !data || data.length === 0) {
+            document.getElementById('error-message').innerText = "Oyuncu bulunamadı!";
+            document.getElementById('error-message').style.display = "block";
+            window.history.pushState({}, '', window.location.pathname);
+            return;
+        }
+
+        const p = data[0];
+        const kdVal = (Number(p.total_kills) / (Number(p.total_deaths) || 1));
+        
+        document.getElementById('card-nick').innerText = p.nick;
+        
+        // Düzeltilen Kısım: Sadece parametreyi push ediyoruz.
+        const newUrl = "?nick=" + encodeURIComponent(p.nick);
+        window.history.pushState({ path: newUrl }, '', newUrl);
+
+        const card = document.getElementById('player-card');
+        card.className = ''; 
+        const rankEl = document.getElementById('card-rank');
+        const bragEl = document.getElementById('card-brag');
+
+        if(kdVal >= 2.5) { 
+            rankEl.innerText = "EFSANE"; bragEl.innerText = "Oyuna yön veriyor."; card.classList.add('theme-efsane'); 
+        } else if(kdVal >= 1.8) { 
+            rankEl.innerText = "USTA"; bragEl.innerText = "Kontrolü elinde tutuyor."; card.classList.add('theme-usta'); 
+        } else if(kdVal >= 1.2) { 
+            rankEl.innerText = "YETENEKLİ"; bragEl.innerText = "Dengeli performans."; card.classList.add('theme-yetenekli'); 
+        } else { 
+            rankEl.innerText = "ACEMİ"; bragEl.innerText = "Başlangıç seviyesinde."; card.classList.add('theme-acemi'); 
+        }
+
+        let badges = [];
+        if((p.hs_percent||0) >= 35) badges.push("HS MAKİNESİ");
+        if(kdVal >= 2.0) badges.push("DURDURULAMAZ");
+        if((p.total_damage||0) > 1000000) badges.push("SAVAŞÇI");
+        document.getElementById('badge-box').innerHTML = badges.map(b => `<span class="badge">${b}</span>`).join('');
+
+        document.getElementById('card-wrapper').style.display = "flex";
+
+        setTimeout(() => {
+            animateValue(document.getElementById('card-kd'), 0, kdVal, 1000, true);
+            animateValue(document.getElementById('card-kills'), 0, Number(p.total_kills), 1000);
+            animateValue(document.getElementById('card-deaths'), 0, Number(p.total_deaths), 1000);
+            animateValue(document.getElementById('card-dmg'), 0, Number(p.total_damage||0), 1000);
+            animateValue(document.getElementById('card-hs'), 0, Number(p.hs_percent || 0), 1000, false, true);
+        }, 100);
+
+    } catch(err) { console.log(err); }
+    finally { isLoading = false; btn.innerText = "Sorgula"; }
+}
+
+function copyShareLink() {
+    const nickEl = document.getElementById('card-nick');
+    if (!nickEl.innerText) return;
+    
+    // Düzeltilen Kısım: Mevcut url üzerinden dinamik link oluşturuyoruz.
+    const shareUrl = window.location.origin + window.location.pathname + "?nick=" + encodeURIComponent(nickEl.innerText);
+    navigator.clipboard.writeText(shareUrl).then(() => {
+        alert("Discord paylaşım linki kopyalandı!");
+    });
+}
+
+function downloadCard(){
+    const card = document.getElementById('player-card');
+    html2canvas(card,{backgroundColor:null,scale:3,useCORS:true}).then(canvas => {
+        const link = document.createElement('a');
+        link.download = `${document.getElementById('card-nick').innerText}_Kart.png`;
+        link.href = canvas.toDataURL("image/png");
+        link.click();
+    });
+}
+</script>
+</body>
+</html>
