@@ -15,24 +15,20 @@
 
     <style>
         /* =========================================
-           1. GENEL TASARIM & TEMA
+           1. GENEL TASARIM & TEMA (Oyuncu Kartı ile Birebir Aynı)
         ========================================= */
         body { 
-            background: url("banner.jpg") center center / cover no-repeat fixed;
+            background: url("banner.jpg") no-repeat center center fixed;
+            background-size: cover; 
             color: #fff; font-family: 'Segoe UI', sans-serif; text-align: center;
             padding: 10px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center;
         }
-        
-        /* KARANLIK FİLTRE HAFİFLETİLDİ (0.88 -> 0.65) */
         body::before { 
-            content: ""; position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(10px); z-index: 0; 
+            content: ""; position: fixed; inset: 0; 
+            background: rgba(0,0,0,0.88); 
+            backdrop-filter: blur(10px); z-index: 0; 
         }
         
-        /* Görsel indirilirken bulanıklığı ve siyahlığı geçici olarak gizlemek için */
-        body.capture-mode::before {
-            display: none !important;
-        }
-
         .content-wrap { position: relative; z-index: 10; width: 100%; max-width: 900px; padding-top: 5px; }
 
         h1 { color: #e5e7eb; margin: 10px 0 25px 0; text-transform: uppercase; letter-spacing: 3px; font-size: 18px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
@@ -58,7 +54,7 @@
         #error-message { color: #ef4444; display: none; font-weight: bold; margin-bottom: 15px; font-size: 14px; }
 
         /* =========================================
-           3. KART TASARIMI (MOR TEMA GERİ GETİRİLDİ)
+           3. KART TASARIMI (Premium Derinlik & Mor Vurgu)
         ========================================= */
         #comparison-wrapper { display: none; flex-direction: column; align-items: center; width: 100%; animation: fadeIn 0.5s ease-out; padding: 20px 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -66,23 +62,27 @@
         .cards-layout { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; position: relative; }
         @media(min-width: 768px) { .cards-layout { flex-direction: row; justify-content: center; align-items: stretch; gap: 40px; } }
 
-        /* KART ZEMİNİ VE KENARLIKLARI SİTENİN ORİJİNAL MOR PALETİNE DÖNDÜRÜLDÜ */
+        /* Zemin rengi Oyuncu Kartı ile birebir uyumlu hale getirildi, Mor glow eklendi */
         .player-card { 
-            background: linear-gradient(160deg, #180a24, #000); 
-            border: 1px solid rgba(139, 92, 246, 0.3); 
+            background: linear-gradient(160deg, #1a0505, #000); 
+            border: 2px solid rgba(139, 92, 246, 0.4); 
             padding: 25px; border-radius: 28px; width: 100%; max-width: 380px; 
-            text-align: left; position: relative; box-shadow: 0 15px 50px rgba(0,0,0,0.6);
+            text-align: left; position: relative; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.8), 0 0 20px rgba(139,92,246,0.15);
             box-sizing: border-box; transition: transform 0.3s ease;
         }
 
         .vs-badge {
-            background: #000; border: 2px solid #8B5CF6; color: #e5e7eb; font-size: 24px; font-weight: 900; 
+            background: linear-gradient(160deg, #1a0505, #000); 
+            border: 2px solid #8B5CF6; color: #f3f4f6; font-size: 24px; font-weight: 900; 
             width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
-            z-index: 20; box-shadow: 0 0 20px rgba(139,92,246,0.35);
+            z-index: 20; 
+            box-shadow: 0 0 25px rgba(139,92,246,0.4);
+            text-shadow: 0 0 10px rgba(255,255,255,0.3);
         }
         @media(max-width: 767px) { .vs-badge { margin: -10px 0; } }
 
-        /* Rozetler */
+        /* Rozetler (Oyuncu Kartı Referans Alındı) */
         .badge-box { display: flex; justify-content: center; flex-wrap: wrap; gap: 10px; margin-bottom: 15px; min-height: 30px; }
         .badge { 
             font-size: 11px; padding: 5px 14px; border-radius: 8px; background: rgba(229, 231, 235, 0.1); 
@@ -90,21 +90,26 @@
             text-transform: uppercase; letter-spacing: 1px; box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
         }
 
-        /* Nick ve Sunucu Bilgisi */
+        /* Nick ve Sunucu Bilgisi (Parlak ve Canlı) */
         .card-nick { 
-            text-align: center; color: #ffffff; font-size: 30px; font-weight: 950; margin: 0 0 12px 0; 
-            line-height: 1.1; text-transform: uppercase; text-shadow: 0 4px 10px rgba(0, 0, 0, 0.8); word-break: break-word;
+            text-align: center; color: #f3f4f6; font-size: 30px; font-weight: 950; margin: 0 0 12px 0; 
+            line-height: 1.1; text-transform: uppercase; 
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3); 
+            word-break: break-word;
         }
         /* Klan Tagı Vurgu Ayarı */
-        .clan-tag { font-weight: 300; color: #94a3b8; font-size: 0.65em; letter-spacing: 1px; }
+        .clan-tag { font-weight: 300; color: #cbd5e1; font-size: 0.65em; letter-spacing: 1px; }
 
-        .card-server-info { text-align: center; color: #94a3b8; font-size: 10px; font-weight: 700; margin-bottom: 25px; letter-spacing: 1.2px; }
+        .card-server-info { 
+            text-align: center; color: #94a3b8; font-size: 10px; font-weight: 800; 
+            margin-bottom: 25px; letter-spacing: 1.2px; text-transform: uppercase;
+        }
 
-        /* İstatistik Satırları */
+        /* İstatistik Satırları (Güçlü Kontrast) */
         .stat-container { display: flex; flex-direction: column; }
         .stat-row { display: flex; justify-content: space-between; align-items: center; margin: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; font-size: 14px; }
-        .stat-row b { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .stat-row span { font-weight: 800; color: #eee; font-size: 16px; transition: color 0.3s; }
+        .stat-row b { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; font-weight: 800; }
+        .stat-row span { font-weight: 900; color: #ffffff; font-size: 16px; transition: color 0.3s; }
 
         .stat-win { color: #22c55e !important; text-shadow: 0 0 10px rgba(34, 197, 94, 0.4); font-size: 110% !important; }
         .stat-lose { color: #6b7280 !important; }
@@ -115,49 +120,48 @@
         ========================================= */
         .results-section { margin-top: 40px; width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
 
-        /* KAZANAN PANELİ ORİJİNAL MOR TEMA */
+        /* KAZANAN PANELİ (Premium Glow Etkisi) */
         .winner-panel {
-            background: linear-gradient(160deg, #180a24, #000); 
-            border: 1px solid rgba(139,92,246,0.8); 
+            background: linear-gradient(160deg, #1a0505, #000); 
+            border: 2px solid rgba(139,92,246,0.6); 
             border-radius: 20px; 
             padding: 20px 25px; text-align: center; 
-            box-shadow: 0 15px 40px rgba(0,0,0,0.6), 0 0 15px rgba(139,92,246,0.25); 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8), 0 0 25px rgba(139,92,246,0.25); 
             width: 100%; box-sizing: border-box;
         }
         .winner-title { font-size: 16px; color: #facc15; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; }
-        .winner-name { font-size: 32px; color: #fff; font-weight: 950; text-transform: uppercase; text-shadow: 0 4px 10px rgba(0,0,0,0.8); margin-bottom: 15px; line-height: 1.1; }
+        .winner-name { 
+            font-size: 32px; color: #f3f4f6; font-weight: 950; text-transform: uppercase; 
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3); margin-bottom: 15px; line-height: 1.1; 
+        }
         
         .winner-score-label { font-size: 11px; color: #94a3b8; font-weight: 800; letter-spacing: 2px; margin-bottom: 5px; text-transform: uppercase; }
-        .winner-score-val { font-size: 26px; color: #fff; font-weight: 950; margin-bottom: 15px; letter-spacing: 2px; }
+        .winner-score-val { font-size: 30px; color: #ffffff; font-weight: 950; margin-bottom: 15px; letter-spacing: 2px; text-shadow: 0 0 15px rgba(255,255,255,0.3); }
 
         .checklist { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; max-width: 250px; margin: 0 auto; background: rgba(255,255,255,0.03); padding: 12px 20px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
-        .check-item { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .text-win { color: #22c55e; }
-        .text-lose { color: #ef4444; }
-        .text-tie { color: #facc15; }
+        .check-item { font-size: 13px; font-weight: 800; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; color: #f3f4f6;}
+        .text-win { color: #22c55e !important; }
+        .text-lose { color: #ef4444 !important; }
+        .text-tie { color: #facc15 !important; }
 
         .winner-summary { margin-top: 15px; font-size: 12px; color: #94a3b8; font-style: italic; font-weight: 600; letter-spacing: 0.5px; }
 
-        /* Güçlendirilmiş Analiz Kutusu */
+        /* Analiz Kutusu (Daha Şık Uyum) */
         .analysis-text { 
-            color: #e2e8f0; 
+            color: #f3f4f6; 
             font-size: 15px; 
             line-height: 1.8; 
-            font-weight: 500;
+            font-weight: 600;
             font-style: italic; 
-            background: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.3)); 
+            background: rgba(139, 92, 246, 0.1); 
             padding: 20px 25px; 
             border-radius: 12px; 
-            border-left: 4px solid #6D28D9; 
+            border-left: 4px solid #8B5CF6; 
             box-shadow: 0 10px 20px rgba(0,0,0,0.5);
             width: 100%;
             box-sizing: border-box;
         }
-        .analysis-text strong {
-            color: #fff;
-            font-weight: 900;
-            font-size: 16px;
-        }
+        .analysis-text strong { color: #ffffff; font-weight: 900; font-size: 16px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
 
         /* =========================================
            5. AKSİYON BUTONLARI
@@ -278,7 +282,6 @@ const Utils = {
         };
         window.requestAnimationFrame(step);
     },
-    // Klan tagını otomatik hafifleştiren formül
     formatNick: (nick) => {
         const regex = /(\|\s*EFEND[İI]\s*\|)/i;
         if(regex.test(nick)) {
@@ -298,7 +301,6 @@ const ComparisonController = {
         document.getElementById('p1-input').value = "";
         document.getElementById('p2-input').value = "";
 
-        // URL parametrelerini tam ve doğru olarak oku
         const urlParams = new URLSearchParams(window.location.search);
         const p1 = urlParams.get('p1'); 
         const p2 = urlParams.get('p2');
@@ -339,7 +341,6 @@ const ComparisonController = {
     },
 
     copyShareLink: () => {
-        // İsimleri input'tan almak, etiketlerden oluşabilecek HTML boşluklarını önler
         const n1 = document.getElementById('p1-input').value.trim();
         const n2 = document.getElementById('p2-input').value.trim();
         
@@ -352,26 +353,20 @@ const ComparisonController = {
         const wrapper = document.getElementById('comparison-wrapper');
         const actionBtns = document.querySelector('.action-buttons');
         
-        // Görüntü alınırken butonları gizle ve KARANLIK FİLTREYİ KALDIR
         actionBtns.style.display = 'none';
-        document.body.classList.add('capture-mode');
 
-        // Tarayıcının karanlık filtreyi sildiğini "anlayabilmesi" için ufak bir gecikme ekledik. (Hayalet/Karanlık çıkma sorununu kökten çözer)
+        // Oyuncu kartında olduğu gibi backgroundColor: null ve scale: 3 yapılandırılması
         setTimeout(() => {
             html2canvas(wrapper, {
-                backgroundColor: "#0d0514", 
-                scale: 2, 
+                backgroundColor: null, 
+                scale: 3, 
                 useCORS: true
             }).then(canvas => {
-                // İşlem bitince butonları ve filtreyi geri getir
                 actionBtns.style.display = 'flex'; 
-                document.body.classList.remove('capture-mode');
                 
-                // İsimleri inputlardan temiz al
                 const n1 = document.getElementById('p1-input').value.trim();
                 const n2 = document.getElementById('p2-input').value.trim();
                 
-                // Dosya isminde hata yaratacak | gibi işaretleri temizle
                 const safeName = (name) => name.replace(/\|/g, '').trim().replace(/\s+/g, '_');
                 
                 const link = document.createElement('a');
@@ -381,7 +376,6 @@ const ComparisonController = {
             }).catch(err => {
                 console.error("Görsel oluşturma hatası:", err);
                 actionBtns.style.display = 'flex';
-                document.body.classList.remove('capture-mode');
                 Utils.showError("Görsel oluşturulamadı.");
             });
         }, 100);
@@ -456,7 +450,6 @@ const RenderService = {
         ['p1', 'p2'].forEach((pKey) => {
             const player = pKey === 'p1' ? p1 : p2;
             
-            // Formatlı (Klan tagı inceltilmiş) Nick yazdırımı
             document.getElementById(`${pKey}-nick`).innerHTML = Utils.formatNick(player.nick);
             
             const badgesHTML = cats[pKey].slice(0, 3).map(k => `<span class="badge">${CONFIG.BADGES[k]}</span>`).join('');
@@ -508,7 +501,6 @@ const RenderService = {
             return;
         }
 
-        // Kazanan ismini de aynı ince klan formatıyla basıyoruz
         nameEl.innerHTML = Utils.formatNick(winnerNick);
 
         let checklistHTML = '';
