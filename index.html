@@ -22,9 +22,17 @@
             color: #fff; font-family: 'Segoe UI', sans-serif; text-align: center;
             padding: 10px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center;
         }
+        
+        /* KARANLIK FİLTRE HAFİFLETİLDİ (0.88 -> 0.65) */
         body::before { 
-            content: ""; position: fixed; inset: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(10px); z-index: 0; 
+            content: ""; position: fixed; inset: 0; background: rgba(0,0,0,0.65); backdrop-filter: blur(10px); z-index: 0; 
         }
+        
+        /* Görsel indirilirken bulanıklığı ve siyahlığı geçici olarak gizlemek için */
+        body.capture-mode::before {
+            display: none !important;
+        }
+
         .content-wrap { position: relative; z-index: 10; width: 100%; max-width: 900px; padding-top: 5px; }
 
         h1 { color: #e5e7eb; margin: 10px 0 25px 0; text-transform: uppercase; letter-spacing: 3px; font-size: 18px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
@@ -50,7 +58,7 @@
         #error-message { color: #ef4444; display: none; font-weight: bold; margin-bottom: 15px; font-size: 14px; }
 
         /* =========================================
-           3. KART TASARIMI (Bordo Tema Korundu)
+           3. KART TASARIMI (Bordo Tema Korundu ve Canlandırıldı)
         ========================================= */
         #comparison-wrapper { display: none; flex-direction: column; align-items: center; width: 100%; animation: fadeIn 0.5s ease-out; padding: 20px 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -58,11 +66,12 @@
         .cards-layout { display: flex; flex-direction: column; align-items: center; gap: 20px; width: 100%; position: relative; }
         @media(min-width: 768px) { .cards-layout { flex-direction: row; justify-content: center; align-items: stretch; gap: 40px; } }
 
+        /* KART ZEMİNİ VE KENARLIKLARI CANLANDIRILDI */
         .player-card { 
-            background: linear-gradient(160deg, #1a0505, #000); 
-            border: 2px solid rgba(229, 231, 235, 0.15); 
+            background: linear-gradient(160deg, #3a0a0a, #0a0000); 
+            border: 1px solid rgba(185, 28, 28, 0.4); 
             padding: 25px; border-radius: 28px; width: 100%; max-width: 380px; 
-            text-align: left; position: relative; box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+            text-align: left; position: relative; box-shadow: 0 15px 50px rgba(0,0,0,0.6);
             box-sizing: border-box; transition: transform 0.3s ease;
         }
 
@@ -106,12 +115,13 @@
         ========================================= */
         .results-section { margin-top: 40px; width: 100%; max-width: 600px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
 
+        /* KAZANAN PANELİ KONTRASTI ARTIRILDI */
         .winner-panel {
-            background: linear-gradient(160deg, #1a0505, #000); 
+            background: linear-gradient(160deg, #3a0a0a, #0a0000); 
             border: 1px solid rgba(139,92,246,0.8); 
             border-radius: 20px; 
             padding: 20px 25px; text-align: center; 
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8), 0 0 14px rgba(139,92,246,0.10); 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6), 0 0 15px rgba(139,92,246,0.25); 
             width: 100%; box-sizing: border-box;
         }
         .winner-title { font-size: 16px; color: #facc15; font-weight: 900; letter-spacing: 2px; margin-bottom: 5px; }
@@ -342,14 +352,18 @@ const ComparisonController = {
         const wrapper = document.getElementById('comparison-wrapper');
         const actionBtns = document.querySelector('.action-buttons');
         
+        // Görüntü alınırken butonları gizle ve KARANLIK FİLTREYİ KALDIR
         actionBtns.style.display = 'none';
+        document.body.classList.add('capture-mode');
 
         html2canvas(wrapper, {
             backgroundColor: "#0d0514", 
             scale: 2, 
             useCORS: true
         }).then(canvas => {
+            // İşlem bitince butonları ve filtreyi geri getir
             actionBtns.style.display = 'flex'; 
+            document.body.classList.remove('capture-mode');
             
             // İsimleri inputlardan temiz al
             const n1 = document.getElementById('p1-input').value.trim();
@@ -365,6 +379,7 @@ const ComparisonController = {
         }).catch(err => {
             console.error("Görsel oluşturma hatası:", err);
             actionBtns.style.display = 'flex';
+            document.body.classList.remove('capture-mode');
             Utils.showError("Görsel oluşturulamadı.");
         });
     }
