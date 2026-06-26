@@ -3,269 +3,630 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Şehrin Efendileri - Oyuncu Kartı</title>
+    <title>Şehrin Efendileri - Profesyonel Karşılaştırma Merkezi</title>
 
-    <meta property="og:title" content="Şehrin Efendileri - Oyuncu Kartı">
-    <meta property="og:description" content="Senin istatistiklerin sunucunun efendisi olmaya yetecek mi? Hemen sorgula ve meydan oku!">
+    <meta property="og:title" content="Şehrin Efendileri - Karşılaştırma Merkezi">
+    <meta property="og:description" content="Detaylı istatistik analizi ve ağırlıklı puan sistemiyle sunucunun gerçek efendisini belirle!">
     <meta property="og:image" content="banner.jpg">
     <meta property="og:type" content="website">
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <style>
-        /* GENEL TASARIM */
+        /* =========================================
+           1. DEĞİŞKENLER & PREMIUM TEMA
+        ========================================= */
+        :root {
+            --bg-dark: #050101;
+            --primary-dark: #120303;
+            --primary-red: #7f1d1d;
+            --primary-red-hover: #991b1b;
+            --accent-gold: #fbbf24;
+            --text-light: #f8fafc;
+            --text-muted: #94a3b8;
+            --win-color: #22c55e;
+            --lose-color: #6b7280;
+            --tie-color: #eab308;
+            --card-border: rgba(255, 255, 255, 0.08);
+            --transition-smooth: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
         body { 
             background: url("banner.jpg") no-repeat center center fixed;
-            background-size: cover; color: #fff; font-family: 'Segoe UI', sans-serif; text-align: center;
-            padding: 10px; min-height: 100vh; margin: 0; display: flex; flex-direction: column; align-items: center;
+            background-size: cover; color: var(--text-light); font-family: 'Segoe UI', system-ui, sans-serif; 
+            margin: 0; padding: 20px 10px; min-height: 100vh; display: flex; flex-direction: column; align-items: center;
         }
-        body::before { content: ""; position: fixed; inset: 0; background: rgba(0,0,0,0.88); backdrop-filter: blur(10px); z-index: 0; }
-        .content-wrap { position: relative; z-index: 10; width: 100%; max-width: 450px; padding-top: 5px; }
-
-        /* BAŞLIK: Gümüş/Platin Efekti */
-        h1 { color: #e5e7eb; margin: 5px 0 15px 0; text-transform: uppercase; letter-spacing: 3px; font-size: 15px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
-
-        /* ARAMA ALANI */
-        .search-box { margin-bottom: 20px; display: flex; justify-content: center; }
-        #nick-input { padding: 10px; border-radius: 8px 0 0 8px; border: 1px solid #7f1d1d; width: 170px; background: #000; color: #fff; outline: none; font-size: 13px; }
-        #search-btn { padding: 10px 18px; cursor: pointer; background: #7f1d1d; border: none; border-radius: 0 8px 8px 0; font-weight: 800; color: #fff; font-size: 13px; transition: 0.3s; }
-        #search-btn:hover { background: #991b1b; }
-
-        /* KART TASARIMI: Koyu Bordo Teması */
-        #card-wrapper { display: none; flex-direction: column; align-items: center; }
-        #player-card { 
-            background: linear-gradient(160deg, #1a0505, #000); 
-            border: 2px solid rgba(229, 231, 235, 0.15); 
-            padding: 25px; 
-            border-radius: 28px; 
-            width: 380px; 
-            text-align: left; 
-            position: relative; 
-            box-shadow: 0 15px 50px rgba(0,0,0,0.8);
+        
+        body::before { 
+            content: ""; position: fixed; inset: 0; 
+            background: rgba(5, 1, 1, 0.93); backdrop-filter: blur(15px); z-index: 0; 
+        }
+        
+        .content-wrap { 
+            position: relative; z-index: 10; width: 100%; max-width: 1050px; 
+            display: flex; flex-direction: column; align-items: center; padding-bottom: 60px;
         }
 
-        /* ROZETLER: Gümüş Temalı */
-        .badge-box { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; min-height: 30px; }
-        .badge { 
-            font-size: 11px; 
-            padding: 5px 14px; 
-            border-radius: 8px; 
-            background: rgba(229, 231, 235, 0.1); 
-            color: #e5e7eb; 
-            font-weight: 900; 
-            border: 1px solid rgba(229, 231, 235, 0.3); 
-            text-transform: uppercase;
+        /* =========================================
+           2. TİPOGRAFİ
+        ========================================= */
+        h1 { 
+            color: #fff; margin: 15px 0 35px 0; text-transform: uppercase; letter-spacing: 8px; 
+            font-size: 30px; text-align: center; font-weight: 950;
+            text-shadow: 0 0 25px rgba(255, 255, 255, 0.15);
+        }
+
+        /* =========================================
+           3. ARAMA MODÜLÜ
+        ========================================= */
+        .search-container {
+            display: flex; flex-direction: column; gap: 15px; margin-bottom: 40px; width: 100%; max-width: 650px;
+            background: linear-gradient(145deg, rgba(20, 5, 5, 0.8), rgba(5, 1, 1, 0.9)); 
+            padding: 35px; border-radius: 28px; border: 1px solid rgba(127, 29, 29, 0.3); 
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), inset 0 0 20px rgba(127, 29, 29, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .input-group { display: flex; gap: 15px; flex-direction: column; }
+        @media(min-width: 600px) { .input-group { flex-direction: row; } }
+
+        .player-input { 
+            flex: 1; padding: 18px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); 
+            background: rgba(0,0,0,0.6); color: #fff; outline: none; font-size: 15px; 
+            text-align: center; transition: var(--transition-smooth); font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase; box-shadow: inset 0 5px 15px rgba(0,0,0,0.5);
+        }
+        .player-input:focus { border-color: var(--primary-red); box-shadow: 0 0 20px rgba(127, 29, 29, 0.5), inset 0 5px 15px rgba(0,0,0,0.5); background: #000; }
+
+        #compare-btn { 
+            padding: 20px; cursor: pointer; background: linear-gradient(135deg, var(--primary-red), #4a0808); 
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; font-weight: 950; 
+            color: #fff; font-size: 17px; letter-spacing: 4px; transition: var(--transition-smooth); 
+            text-transform: uppercase; display: flex; justify-content: center; align-items: center; gap: 12px;
+            box-shadow: 0 10px 30px rgba(127, 29, 29, 0.4); position: relative; overflow: hidden;
+        }
+        #compare-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+            transform: skewX(-25deg); transition: 0.5s;
+        }
+        #compare-btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(127, 29, 29, 0.7); filter: brightness(1.1); }
+        #compare-btn:hover:not(:disabled)::before { left: 150%; }
+        #compare-btn:disabled { background: #1e293b; border-color: transparent; cursor: not-allowed; opacity: 0.6; box-shadow: none; }
+
+        .loader {
+            display: none; width: 22px; height: 22px; border: 3px solid rgba(255,255,255,0.2);
+            border-radius: 50%; border-top-color: #fff; animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        #status-message { font-weight: 600; text-align: center; min-height: 24px; font-size: 14px; margin-bottom: 25px; letter-spacing: 1px; }
+
+        /* =========================================
+           4. PREMIUM KART MİMARİSİ
+        ========================================= */
+        #comparison-wrapper { display: none; width: 100%; flex-direction: column; align-items: center; animation: fadeIn 0.8s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .cards-layout { display: flex; flex-direction: column; align-items: center; gap: 30px; width: 100%; position: relative; z-index: 2; }
+        @media(min-width: 950px) { .cards-layout { flex-direction: row; justify-content: center; align-items: stretch; gap: 50px; } }
+
+        .vs-badge {
+            background: radial-gradient(circle at center, var(--primary-red), #2a0404);
+            border: 2px solid rgba(255,255,255,0.15); color: #fff; font-size: 32px; font-weight: 950; 
+            width: 80px; height: 80px; border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+            z-index: 20; box-shadow: 0 0 40px rgba(127, 29, 29, 0.9), inset 0 0 15px rgba(0,0,0,0.8); 
+            letter-spacing: -2px; font-style: italic;
+        }
+        @media(max-width: 949px) { .vs-badge { margin: -15px 0; } }
+
+        /* Kart Derinliği ve Hover Efektleri */
+        .player-card { 
+            background: linear-gradient(160deg, var(--primary-dark), #000); 
+            border: 1px solid var(--card-border); padding: 35px 30px; border-radius: 36px; 
+            width: 100%; max-width: 400px; box-shadow: 0 25px 60px rgba(0,0,0,0.9); 
+            box-sizing: border-box; transition: var(--transition-smooth); position: relative;
+        }
+        .player-card:hover {
+            transform: translateY(-8px); border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 35px 80px rgba(0,0,0,1), 0 0 30px rgba(255,255,255,0.03);
+        }
+        
+        .card-winner { 
+            transform: scale(1.03); border-color: rgba(34, 197, 94, 0.3); 
+            box-shadow: 0 30px 70px rgba(0,0,0,0.9), 0 0 40px rgba(34, 197, 94, 0.1); z-index: 10;
+        }
+        .card-winner:hover { transform: scale(1.03) translateY(-8px); border-color: rgba(34, 197, 94, 0.5); box-shadow: 0 35px 80px rgba(0,0,0,1), 0 0 50px rgba(34, 197, 94, 0.15); }
+        .card-loser { transform: scale(0.97); opacity: 0.75; filter: grayscale(40%); }
+        .card-loser:hover { opacity: 0.9; filter: grayscale(20%); }
+
+        .card-nick { 
+            text-align: center; color: #fff; font-size: 34px; font-weight: 950; margin: 0 0 5px 0; 
+            text-transform: uppercase; text-shadow: 0 0 25px rgba(255, 255, 255, 0.3); word-break: break-all;
             letter-spacing: 1px;
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+        }
+        .card-server-info { text-align: center; color: var(--text-muted); font-size: 10px; font-weight: 800; margin-bottom: 25px; letter-spacing: 3px; }
+
+        .dynamic-badges { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 30px; min-height: 28px; }
+        .dyn-badge { 
+            font-size: 10px; padding: 6px 14px; border-radius: 8px; font-weight: 950; letter-spacing: 1px;
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.15), rgba(0,0,0,0.5)); color: var(--win-color); 
+            border: 1px solid rgba(34, 197, 94, 0.4); text-transform: uppercase; box-shadow: 0 0 10px rgba(34, 197, 94, 0.1);
         }
 
-        /* ODAK NOKTASI: PARLAYAN GÜMÜŞ NICK */
-        #card-nick { 
-            text-align: center; 
-            color: #f3f4f6; 
-            font-size: 30px; 
-            font-weight: 950; 
-            margin: 0 0 45px 0; 
-            line-height: 1; 
-            text-transform: uppercase;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+        /* İstatistik Satırları (JS ile Üretilecek) */
+        .stat-container { display: flex; flex-direction: column; gap: 18px; }
+        .stat-row { 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 1px solid rgba(255,255,255,0.04); padding-bottom: 12px; font-size: 16px; transition: var(--transition-smooth);
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-row b { color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; }
+        .stat-row span { font-weight: 950; color: #fff; transition: var(--transition-smooth); font-family: monospace; font-size: 18px; }
+
+        .stat-win { color: var(--win-color) !important; text-shadow: 0 0 20px rgba(34, 197, 94, 0.5); transform: scale(1.1); transform-origin: right; }
+        .stat-lose { color: var(--lose-color) !important; }
+        .stat-tie { color: var(--tie-color) !important; text-shadow: 0 0 15px rgba(234, 179, 8, 0.3); }
+
+        /* =========================================
+           5. KAZANAN PANELİ & DETAYLI ANALİZ
+        ========================================= */
+        .results-section { width: 100%; max-width: 850px; margin-top: 60px; display: flex; flex-direction: column; gap: 25px; z-index: 5; }
+
+        .premium-winner-panel {
+            background: linear-gradient(135deg, rgba(15, 3, 3, 0.95), rgba(0,0,0,0.98));
+            border: 1px solid rgba(251, 191, 36, 0.2); border-radius: 32px; padding: 45px 30px;
+            text-align: center; box-shadow: 0 30px 60px rgba(0,0,0,0.9), inset 0 0 50px rgba(251, 191, 36, 0.05);
+            position: relative; overflow: hidden;
+        }
+        .premium-winner-panel::before {
+            content: ""; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(251,191,36,0.08) 0%, transparent 60%);
+            animation: rotateGlow 12s linear infinite; pointer-events: none;
         }
 
-        .card-server-info { 
-            text-align: center; 
-            color: #94a3b8; 
-            font-size: 10px; 
-            font-weight: 700; 
-            margin-bottom: 25px; 
-            letter-spacing: 1.2px;
+        .trophy-icon { width: 90px; height: 90px; margin-bottom: 20px; filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.6)); }
+        
+        .winner-subtitle { font-size: 13px; color: var(--accent-gold); letter-spacing: 5px; text-transform: uppercase; margin-bottom: 12px; font-weight: 900; }
+        .winner-name-large { 
+            font-size: 48px; font-weight: 950; color: #fff; text-transform: uppercase; 
+            text-shadow: 0 0 40px rgba(255,255,255,0.4); margin: 0; line-height: 1; letter-spacing: 2px;
         }
-
-        /* RANK TEMALARI: Kırmızı Tonları */
-        .theme-acemi { border-color: #4b5563 !important; }
-        .theme-yetenekli { border-color: #991b1b !important; box-shadow: 0 0 20px rgba(153, 27, 27, 0.3); }
-        .theme-usta { border-color: #ef4444 !important; box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); }
-        .theme-efsane { border-color: #ffffff !important; animation: glow 2s infinite alternate; }
-        @keyframes glow { from { box-shadow: 0 0 10px rgba(255, 255, 255, 0.2); } to { box-shadow: 0 0 35px rgba(185, 28, 28, 0.6); } }
-
-        #card-rank { text-align: center; font-size: 22px; font-weight: 900; margin-bottom: 4px; letter-spacing: 2px; color: #f3f4f6; }
-        #card-brag { text-align: center; font-size: 13px; color: #94a3b8; margin-bottom: 20px; font-style: italic; }
-
-        .kd-box { background: rgba(127, 29, 29, 0.15); border-radius: 18px; padding: 12px; margin-bottom: 18px; text-align: center; border: 1px solid rgba(127, 29, 29, 0.3); }
-        #card-kd { font-size: 52px; font-weight: 950; display: block; line-height: 1; color: #f3f4f6; }
-
-        .stat-row { display: flex; justify-content: space-between; margin: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 5px; font-size: 14px; }
-        .stat-row b { color: #94a3b8; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
-        .stat-row span { font-weight: 800; color: #eee; }
-
-        /* AKSİYON BUTONLARI */
-        .challenge-text { color: #94a3b8; font-size: 11px; font-weight: 800; margin: 12px 0; font-style: italic; }
-        .action-buttons { display: flex; gap: 10px; width: 380px; }
-        .btn-action { 
-            flex: 1; 
-            padding: 12px 5px; 
-            border-radius: 12px; 
-            font-weight: 800; 
-            cursor: pointer; 
-            font-size: 10px; 
-            transition: 0.2s;
-            background: #000;
-            border: 2px solid rgba(255,255,255,0.15);
-            color: #fff;
+        
+        /* Detaylı Skor Tablosu */
+        .detailed-scoreboard {
+            display: flex; justify-content: center; align-items: stretch; gap: 30px; margin-top: 40px; flex-wrap: wrap;
+            background: rgba(0,0,0,0.4); border-radius: 20px; padding: 20px; border: 1px solid rgba(255,255,255,0.05);
         }
-        .btn-insta { border-color: #b91c1c; color: #f3f4f6; background: #7f1d1d; }
-        .btn-discord { border-color: #4b5563; color: #f3f4f6; }
-        .btn-action:hover { transform: translateY(-2px); filter: brightness(1.2); }
+        .score-box { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 10px 20px; }
+        .score-box.main { border-right: 1px solid rgba(255,255,255,0.1); border-left: 1px solid rgba(255,255,255,0.1); }
+        .score-val { font-size: 36px; font-weight: 950; color: #fff; line-height: 1; }
+        .score-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 8px; font-weight: 700; }
+
+        /* Dinamik Doğal Dil Analiz Kutusu */
+        .analysis-box {
+            background: linear-gradient(to right, rgba(20,5,5,0.8), rgba(0,0,0,0.6)); 
+            border-left: 4px solid var(--accent-gold); padding: 30px; border-radius: 0 20px 20px 0; 
+            font-size: 16px; line-height: 1.8; color: #cbd5e1; font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .analysis-box strong { color: #fff; font-weight: 900; letter-spacing: 0.5px; }
+        .analysis-box .highlight-win { color: var(--win-color); font-weight: 800; }
+
+        /* =========================================
+           6. GELECEĞE HAZIR MODÜLLER
+        ========================================= */
+        .future-grid { 
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; 
+            width: 100%; margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 30px;
+        }
+        .future-btn {
+            background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08); color: var(--text-muted);
+            padding: 14px; border-radius: 14px; font-size: 11px; font-weight: 800; text-transform: uppercase;
+            letter-spacing: 1.5px; cursor: pointer; transition: var(--transition-smooth); text-align: center;
+        }
+        .future-btn:hover { background: rgba(255,255,255,0.08); color: #fff; border-color: rgba(255,255,255,0.3); transform: translateY(-2px); }
+
     </style>
 </head>
-
 <body>
+
 <div class="content-wrap">
-    <h1>OYUNCU KARTI SORGULA</h1>
-    <div class="search-box">
-        <input id="nick-input" placeholder="Nick yazınız...">
-        <button id="search-btn" onclick="fetchPlayerStats()">Sorgula</button>
+    <h1>KARŞILAŞTIRMA MERKEZİ</h1>
+    
+    <div class="search-container">
+        <div class="input-group">
+            <input type="text" id="p1-input" class="player-input" placeholder="1. Oyuncu Nick" autocomplete="off">
+            <input type="text" id="p2-input" class="player-input" placeholder="2. Oyuncu Nick" autocomplete="off">
+        </div>
+        <button id="compare-btn">
+            <span class="loader" id="btn-loader"></span>
+            <span id="btn-text">İSTATİSTİKLERİ ÇARPIŞTIR</span>
+        </button>
     </div>
 
-    <div id="error-message" style="color: #ef4444; display: none; font-weight: bold; margin-bottom: 15px;"></div>
+    <div id="status-message"></div>
 
-    <div id="card-wrapper">
-        <div id="player-card">
-            <div id="badge-box" class="badge-box"></div>
-            <h2 id="card-nick"></h2>
-            <div class="card-server-info">SEHRİN EFENDİLERİ | 95.173.173.81</div>
-            <div id="card-rank"></div>
-            <div id="card-brag"></div>
-            <div class="kd-box">
-                <span style="font-size: 9px; color: #94a3b8; letter-spacing: 1px; font-weight: 800;">K/D PERFORMANSI</span>
-                <span id="card-kd">0.00</span>
+    <div id="comparison-wrapper">
+        <div class="cards-layout">
+            
+            <div id="card-1" class="player-card">
+                <h2 id="p1-nick" class="card-nick">-</h2>
+                <div class="card-server-info">ŞEHRİN EFENDİLERİ | 95.173.173.81</div>
+                <div id="p1-badges" class="dynamic-badges"></div>
+                <div id="p1-stats" class="stat-container"></div>
             </div>
-            <div class="stat-row"><b>ÖLDÜRME</b> <span id="card-kills">0</span></div>
-            <div class="stat-row"><b>ÖLÜM</b> <span id="card-deaths">0</span></div>
-            <div class="stat-row"><b>HS ORANI</b> <span id="card-hs">%0</span></div>
-            <div class="stat-row"><b>TOPLAM HASAR</b> <span id="card-dmg">0</span></div>
+
+            <div class="vs-badge">VS</div>
+
+            <div id="card-2" class="player-card">
+                <h2 id="p2-nick" class="card-nick">-</h2>
+                <div class="card-server-info">ŞEHRİN EFENDİLERİ | 95.173.173.81</div>
+                <div id="p2-badges" class="dynamic-badges"></div>
+                <div id="p2-stats" class="stat-container"></div>
+            </div>
         </div>
-        
-        <div class="challenge-text">"Beni geçebilecek var mı? Paylaş ve meydan oku!"</div>
-        
-        <div class="action-buttons">
-            <button class="btn-action btn-insta" onclick="downloadCard()">INSTAGRAM İÇİN KAYDET</button>
-            <button class="btn-action btn-discord" onclick="copyShareLink()">DISCORD İÇİN KOPYALA</button>
+
+        <div class="results-section">
+            <div class="premium-winner-panel" id="winner-panel">
+                <svg class="trophy-icon" viewBox="0 0 24 24" fill="none" stroke="var(--accent-gold)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M8 21h8M12 17v4M7 4h10l1 7c0 3.5-3 6-6 6s-6-2.5-6-6l1-7z"/>
+                    <path d="M7 4H4.5A2.5 2.5 0 0 0 2 6.5v0A2.5 2.5 0 0 0 4.5 9H6M17 4h2.5A2.5 2.5 0 0 1 22 6.5v0A2.5 2.5 0 0 1 19.5 9H18"/>
+                </svg>
+                <div class="winner-subtitle" id="winner-status-text">AĞIRLIKLI PUAN ŞAMPİYONU</div>
+                <h3 class="winner-name-large" id="winner-name">-</h3>
+                
+                <div class="detailed-scoreboard">
+                    <div class="score-box">
+                        <span class="score-val" id="score-won-cats" style="color: var(--win-color)">0</span>
+                        <span class="score-label">KAZANDIĞI<br>KATEGORİ</span>
+                    </div>
+                    <div class="score-box main">
+                        <span class="score-val" id="score-total-pts" style="color: #fff; font-size: 42px;">0</span>
+                        <span class="score-label" style="color: var(--accent-gold);">TOPLAM<br>AĞIRLIKLI PUAN</span>
+                    </div>
+                    <div class="score-box">
+                        <span class="score-val" id="score-lost-cats" style="color: var(--lose-color)">0</span>
+                        <span class="score-label">KAYBETTİĞİ<br>KATEGORİ</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analysis-box" id="analysis-text"></div>
+            
+            <div class="future-grid">
+                <button class="future-btn" onclick="alert('Genel Sıralama Verisi Yakında Aktif Edilecek!')">Genel Sıralama (Global Rank)</button>
+                <button class="future-btn" onclick="copyShareData()">Sonucu Paylaş (Discord/Sosyal)</button>
+                <button class="future-btn" onclick="alert('Görsel Oluşturucu Yakında Eklenecek!')">Görsel Olarak İndir</button>
+                <button class="future-btn" onclick="window.open('https://instagram.com/sehrinefendilerics16', '_blank')">Instagram Adresimiz</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-const supabaseClient = window.supabase.createClient(
-    "https://ksevvntxdkuexulklmph.supabase.co",
-    "sb_publishable_9iHDw5_WEWyNnCz_wXIMuA_VPt36UTL"
-);
+/**
+ * ==========================================================
+ * 1. SİSTEM KONFİGÜRASYONU VE MİMARİ ALTYAPI (CONFIG)
+ * Ağırlıklar, gösterim isimleri ve formatlar tamamen dinamiktir.
+ * ==========================================================
+ */
+const CONFIG = {
+    SUPABASE_URL: "https://ksevvntxdkuexulklmph.supabase.co",
+    SUPABASE_KEY: "sb_publishable_9iHDw5_WEWyNnCz_wXIMuA_VPt36UTL",
+    
+    // Karşılaştırma yapılacak anahtarlar dizisi (Gelecekte buraya 'playtime', 'accuracy' vb. eklenebilir)
+    STAT_KEYS: ['kd', 'kills', 'dmg', 'hs', 'deaths'],
+    
+    // Her istatistiğin ağırlıklı puan değeri
+    WEIGHTS: { kd: 3, kills: 2, dmg: 2, hs: 1, deaths: 1 },
+    
+    // Analiz metinleri ve ekrandaki başlıklar
+    STAT_NAMES: { 
+        kd: "K/D Oranı", 
+        kills: "Öldürme", 
+        dmg: "Toplam Hasar", 
+        hs: "Headshot Oranı", 
+        deaths: "Hayatta Kalma (Az Ölüm)" 
+    },
+    
+    // Karşılaştırmayı kazanana verilecek profesyonel rozetler
+    STAT_BADGES: { 
+        kd: "K/D LİDERİ", 
+        kills: "SKOR LİDERİ", 
+        dmg: "HASAR KRALI", 
+        hs: "HS USTASI", 
+        deaths: "HAYATTA KALAN" 
+    },
+    
+    // İstatistiklerin formatlama kuralları
+    FORMATTERS: {
+        kd: (val) => val.toFixed(2),
+        kills: (val) => Math.floor(val).toLocaleString('tr-TR'),
+        dmg: (val) => Math.floor(val).toLocaleString('tr-TR'),
+        hs: (val) => `%${Math.floor(val)}`,
+        deaths: (val) => Math.floor(val).toLocaleString('tr-TR')
+    },
+    
+    // Hangi istatistiklerde "düşük olan" kazanır kuralı geçerli?
+    INVERSE_LOGIC: { deaths: true }
+};
 
+const supabaseClient = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+
+// Paylaşım için global state
+let currentComparisonState = null; 
+
+/**
+ * ==========================================================
+ * 2. BAŞLATICI (INIT)
+ * ==========================================================
+ */
 document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('compare-btn').addEventListener('click', handleComparison);
+    
     const urlParams = new URLSearchParams(window.location.search);
-    const nickParam = urlParams.get('nick');
-    if (nickParam) {
-        document.getElementById('nick-input').value = nickParam;
-        fetchPlayerStats(nickParam);
-    }
+    const p1 = urlParams.get('p1');
+    const p2 = urlParams.get('p2');
+    
+    if (p1) document.getElementById('p1-input').value = p1;
+    if (p2) document.getElementById('p2-input').value = p2;
+    if (p1 && p2) handleComparison();
 });
 
-function animateValue(obj, start, end, duration, isFloat = false, isPercent = false) {
-    let startTimestamp = null;
-    const step = (timestamp) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-        let val = progress * (end - start) + start;
-        let finalVal = isFloat ? val.toFixed(2) : Math.floor(val).toLocaleString();
-        obj.innerHTML = isPercent ? "%" + Math.floor(val) : finalVal;
-        if (progress < 1) window.requestAnimationFrame(step);
-    };
-    window.requestAnimationFrame(step);
-}
+/**
+ * ==========================================================
+ * 3. ANA DENETLEYİCİ (CONTROLLER)
+ * ==========================================================
+ */
+async function handleComparison() {
+    const p1Nick = document.getElementById('p1-input').value.trim();
+    const p2Nick = document.getElementById('p2-input').value.trim();
 
-let isLoading = false;
-async function fetchPlayerStats(overrideNick = null){
-    const input = overrideNick || document.getElementById('nick-input').value.trim();
-    if(!input || isLoading) return;
+    if (!p1Nick || !p2Nick) return showStatus("Lütfen iki oyuncunun da nickini girin.", "error");
 
-    isLoading = true;
-    const btn = document.getElementById('search-btn');
-    btn.innerText = "...";
-    document.getElementById('error-message').style.display = "none";
-    document.getElementById('card-wrapper').style.display = "none";
+    setLoadingState(true);
+    document.getElementById('comparison-wrapper').style.display = "none";
 
     try {
-        const { data, error } = await supabaseClient.rpc('search_player',{search_input:input});
-        if(error || !data || data.length === 0) {
-            document.getElementById('error-message').innerText = "Oyuncu bulunamadı!";
-            document.getElementById('error-message').style.display = "block";
-            window.history.pushState({}, '', window.location.pathname);
-            return;
-        }
+        const { data1, data2 } = await fetchPlayers(p1Nick, p2Nick);
+        updateURL(data1.nick, data2.nick);
 
-        const p = data[0];
-        const kdVal = (Number(p.total_kills) / (Number(p.total_deaths) || 1));
-        
-        document.getElementById('card-nick').innerText = p.nick;
-        
-        // Düzeltilen Kısım: Sadece parametreyi push ediyoruz.
-        const newUrl = "?nick=" + encodeURIComponent(p.nick);
-        window.history.pushState({ path: newUrl }, '', newUrl);
+        const analysisData = calculateComparison(data1, data2);
+        currentComparisonState = analysisData; // Paylaşım modülü için kaydet
 
-        const card = document.getElementById('player-card');
-        card.className = ''; 
-        const rankEl = document.getElementById('card-rank');
-        const bragEl = document.getElementById('card-brag');
+        renderPlayers(analysisData);
+        renderWinner(analysisData);
+        renderAnalysisText(analysisData);
 
-        if(kdVal >= 2.5) { 
-            rankEl.innerText = "EFSANE"; bragEl.innerText = "Oyuna yön veriyor."; card.classList.add('theme-efsane'); 
-        } else if(kdVal >= 1.8) { 
-            rankEl.innerText = "USTA"; bragEl.innerText = "Kontrolü elinde tutuyor."; card.classList.add('theme-usta'); 
-        } else if(kdVal >= 1.2) { 
-            rankEl.innerText = "YETENEKLİ"; bragEl.innerText = "Dengeli performans."; card.classList.add('theme-yetenekli'); 
-        } else { 
-            rankEl.innerText = "ACEMİ"; bragEl.innerText = "Başlangıç seviyesinde."; card.classList.add('theme-acemi'); 
-        }
-
-        let badges = [];
-        if((p.hs_percent||0) >= 35) badges.push("HS MAKİNESİ");
-        if(kdVal >= 2.0) badges.push("DURDURULAMAZ");
-        if((p.total_damage||0) > 1000000) badges.push("SAVAŞÇI");
-        document.getElementById('badge-box').innerHTML = badges.map(b => `<span class="badge">${b}</span>`).join('');
-
-        document.getElementById('card-wrapper').style.display = "flex";
-
-        setTimeout(() => {
-            animateValue(document.getElementById('card-kd'), 0, kdVal, 1000, true);
-            animateValue(document.getElementById('card-kills'), 0, Number(p.total_kills), 1000);
-            animateValue(document.getElementById('card-deaths'), 0, Number(p.total_deaths), 1000);
-            animateValue(document.getElementById('card-dmg'), 0, Number(p.total_damage||0), 1000);
-            animateValue(document.getElementById('card-hs'), 0, Number(p.hs_percent || 0), 1000, false, true);
-        }, 100);
-
-    } catch(err) { console.log(err); }
-    finally { isLoading = false; btn.innerText = "Sorgula"; }
+        showStatus("");
+        document.getElementById('comparison-wrapper').style.display = "flex";
+    } catch (err) {
+        showStatus(err.message, "error");
+    } finally {
+        setLoadingState(false);
+    }
 }
 
-function copyShareLink() {
-    const nickEl = document.getElementById('card-nick');
-    if (!nickEl.innerText) return;
+/**
+ * ==========================================================
+ * 4. VERİ ERİŞİM KATMANI (FETCH)
+ * ==========================================================
+ */
+async function fetchPlayers(nick1, nick2) {
+    const [res1, res2] = await Promise.all([
+        supabaseClient.rpc('search_player', { search_input: nick1 }),
+        supabaseClient.rpc('search_player', { search_input: nick2 })
+    ]);
+
+    if (res1.error || res2.error) throw new Error("Sunucu ile bağlantı kurulamadı.");
+    if (!res1.data || res1.data.length === 0) throw new Error(`1. Oyuncu (${nick1}) bulunamadı.`);
+    if (!res2.data || res2.data.length === 0) throw new Error(`2. Oyuncu (${nick2}) bulunamadı.`);
+
+    return { data1: res1.data[0], data2: res2.data[0] };
+}
+
+/**
+ * ==========================================================
+ * 5. HESAPLAMA MOTORU (AĞIRLIKLI PUAN SİSTEMİ)
+ * ==========================================================
+ */
+function calculateComparison(raw1, raw2) {
+    // Ham veriyi standart objeye çevir. Gelecekte 'globalRank' gibi veriler buraya eklenecek.
+    const extractStats = (p) => ({
+        nick: p.nick,
+        globalRank: null, // Gelecekte eklenecek genel sıralama altyapısı
+        kd: Number(p.total_kills) / (Number(p.total_deaths) || 1),
+        kills: Number(p.total_kills),
+        dmg: Number(p.total_damage || 0),
+        hs: Number(p.hs_percent || 0),
+        deaths: Number(p.total_deaths)
+    });
+
+    const p1 = extractStats(raw1);
+    const p2 = extractStats(raw2);
+
+    let p1Score = 0, p2Score = 0;
+    const categoryWinners = { p1: [], p2: [], ties: [] };
+    const results = {};
+
+    // CONFIG.STAT_KEYS üzerinden dinamik döngü
+    CONFIG.STAT_KEYS.forEach(key => {
+        const val1 = p1[key];
+        const val2 = p2[key];
+        const isInverse = CONFIG.INVERSE_LOGIC[key] || false;
+        const pts = CONFIG.WEIGHTS[key];
+
+        if (val1 === val2) {
+            categoryWinners.ties.push(key);
+            results[key] = { winner: 'tie', pts: 0 };
+        } else {
+            const p1Wins = isInverse ? (val1 < val2) : (val1 > val2);
+            if (p1Wins) {
+                p1Score += pts;
+                categoryWinners.p1.push(key);
+                results[key] = { winner: 'p1', pts };
+            } else {
+                p2Score += pts;
+                categoryWinners.p2.push(key);
+                results[key] = { winner: 'p2', pts };
+            }
+        }
+    });
+
+    return { p1, p2, scores: { p1: p1Score, p2: p2Score }, results, categoryWinners };
+}
+
+/**
+ * ==========================================================
+ * 6. MODÜLER GÖRÜNÜM KATMANI (RENDER)
+ * ==========================================================
+ */
+function renderPlayers(data) {
+    renderPlayerCard(1, data.p1, data);
+    renderPlayerCard(2, data.p2, data);
+    applyCardWinnerEffects(data.scores);
+}
+
+function renderPlayerCard(playerNum, pData, fullData) {
+    document.getElementById(`p${playerNum}-nick`).innerText = pData.nick;
+    renderBadges(playerNum, fullData.categoryWinners);
+    renderPlayerStats(playerNum, pData, fullData.results);
+}
+
+function renderBadges(playerNum, categoryWinners) {
+    const pKey = `p${playerNum}`;
+    const html = categoryWinners[pKey].map(statKey => 
+        `<span class="dyn-badge">${CONFIG.STAT_BADGES[statKey]}</span>`
+    ).join('');
+    document.getElementById(`${pKey}-badges`).innerHTML = html;
+}
+
+// İstatistik satırlarını HTML'e elle yazmak yerine tamamen dinamik oluşturur.
+function renderPlayerStats(playerNum, pData, results) {
+    const pKey = `p${playerNum}`;
+    const container = document.getElementById(`${pKey}-stats`);
+    let html = '';
+
+    CONFIG.STAT_KEYS.forEach(key => {
+        const value = CONFIG.FORMATTERS[key](pData[key]);
+        const winnerClass = results[key].winner === pKey ? 'stat-win' : (results[key].winner === 'tie' ? 'stat-tie' : 'stat-lose');
+        
+        html += `
+            <div class="stat-row">
+                <b>${CONFIG.STAT_NAMES[key]}</b> 
+                <span class="${winnerClass}">${value}</span>
+            </div>
+        `;
+    });
     
-    // Düzeltilen Kısım: Mevcut url üzerinden dinamik link oluşturuyoruz.
-    const shareUrl = window.location.origin + window.location.pathname + "?nick=" + encodeURIComponent(nickEl.innerText);
-    navigator.clipboard.writeText(shareUrl).then(() => {
-        alert("Discord paylaşım linki kopyalandı!");
+    container.innerHTML = html;
+}
+
+function applyCardWinnerEffects(scores) {
+    const c1 = document.getElementById('card-1'), c2 = document.getElementById('card-2');
+    c1.className = "player-card"; c2.className = "player-card";
+
+    if (scores.p1 > scores.p2) { c1.classList.add('card-winner'); c2.classList.add('card-loser'); }
+    else if (scores.p2 > scores.p1) { c2.classList.add('card-winner'); c1.classList.add('card-loser'); }
+}
+
+/**
+ * ==========================================================
+ * 7. PREMIUM KAZANAN PANELİ & AKILLI ANALİZ
+ * ==========================================================
+ */
+function renderWinner(data) {
+    const { p1, p2, scores, categoryWinners } = data;
+    const nameEl = document.getElementById('winner-name');
+    const statusEl = document.getElementById('winner-status-text');
+    const panel = document.getElementById('winner-panel');
+
+    const totalPtsEl = document.getElementById('score-total-pts');
+    const wonCatsEl = document.getElementById('score-won-cats');
+    const lostCatsEl = document.getElementById('score-lost-cats');
+
+    if (scores.p1 > scores.p2) {
+        nameEl.innerText = p1.nick; statusEl.innerText = "AĞIRLIKLI PUAN ŞAMPİYONU";
+        nameEl.style.color = "#fff"; panel.style.borderColor = "var(--win-color)";
+        totalPtsEl.innerText = scores.p1;
+        wonCatsEl.innerText = categoryWinners.p1.length;
+        lostCatsEl.innerText = categoryWinners.p2.length;
+    } else if (scores.p2 > scores.p1) {
+        nameEl.innerText = p2.nick; statusEl.innerText = "AĞIRLIKLI PUAN ŞAMPİYONU";
+        nameEl.style.color = "#fff"; panel.style.borderColor = "var(--win-color)";
+        totalPtsEl.innerText = scores.p2;
+        wonCatsEl.innerText = categoryWinners.p2.length;
+        lostCatsEl.innerText = categoryWinners.p1.length;
+    } else {
+        nameEl.innerText = "BERABERE"; statusEl.innerText = "GÜÇLER TAMAMEN EŞİT";
+        nameEl.style.color = "var(--tie-color)"; panel.style.borderColor = "var(--tie-color)";
+        totalPtsEl.innerText = scores.p1;
+        wonCatsEl.innerText = categoryWinners.ties.length;
+        lostCatsEl.innerText = categoryWinners.ties.length;
+        wonCatsEl.style.color = "var(--tie-color)"; lostCatsEl.style.color = "var(--tie-color)";
+    }
+}
+
+function renderAnalysisText(data) {
+    const { p1, p2, categoryWinners, scores } = data;
+    const getNames = (arr) => arr.map(k => CONFIG.STAT_NAMES[k]).join(', ');
+
+    let txt = "";
+    if (scores.p1 === scores.p2) {
+        txt = `Savaş alanında inanılmaz bir eşleşme! Her iki oyuncu da sistemi kilitleyerek tam <strong>${scores.p1} ağırlıklı puan</strong> aldı. <br><br>Eşit güce sahip oldukları ve yenişemedikleri kategoriler: <strong>${getNames(categoryWinners.ties)}</strong>.`;
+    } else {
+        const w = scores.p1 > scores.p2 ? p1 : p2;
+        const l = scores.p1 > scores.p2 ? p2 : p1;
+        const wCats = scores.p1 > scores.p2 ? categoryWinners.p1 : categoryWinners.p2;
+        const lCats = scores.p1 > scores.p2 ? categoryWinners.p2 : categoryWinners.p1;
+
+        txt = `<strong>${w.nick}</strong>, özellikle <strong>${getNames(wCats)}</strong> alanlarında rakibine ciddi bir üstünlük kurarak oyunun kontrolünü eline aldı. <br><br>`;
+        
+        if (lCats.length > 0) {
+            txt += `Buna karşın <strong>${l.nick}</strong> ise <strong>${getNames(lCats)}</strong> istatistikleriyle öne çıkarak kolay pes etmeyeceğini gösterdi. <br><br>`;
+        }
+        
+        txt += `Ağırlıklı analiz sonucunda <strong class="highlight-win">${w.nick}</strong> daha baskın ve dengeli bir performans sergileyerek karşılaşmanın büyük galibi oldu.`;
+    }
+    document.getElementById('analysis-text').innerHTML = txt;
+}
+
+/**
+ * ==========================================================
+ * 8. SOSYAL MEDYA PAYLAŞIM VE YARDIMCI ARAÇLAR
+ * ==========================================================
+ */
+function copyShareData() {
+    if (!currentComparisonState) return;
+    const { p1, p2, scores } = currentComparisonState;
+    
+    let winnerText = scores.p1 === scores.p2 ? "Berabere" : (scores.p1 > scores.p2 ? p1.nick : p2.nick);
+    let scoreText = `${scores.p1} - ${scores.p2}`;
+
+    const textTemplate = `⚔️ Oyuncu Karşılaştırması\n\n${p1.nick} vs ${p2.nick}\n\nKazanan\n🏆 ${winnerText}\n\nAğırlıklı Puan\n📊 ${scoreText}\n\n🔗 ${window.location.href}`;
+
+    navigator.clipboard.writeText(textTemplate).then(() => {
+        alert("Discord ve sosyal medya için paylaşım metni kopyalandı!");
     });
 }
 
-function downloadCard(){
-    const card = document.getElementById('player-card');
-    html2canvas(card,{backgroundColor:null,scale:3,useCORS:true}).then(canvas => {
-        const link = document.createElement('a');
-        link.download = `${document.getElementById('card-nick').innerText}_Kart.png`;
-        link.href = canvas.toDataURL("image/png");
-        link.click();
-    });
+function showStatus(msg, type = "info") {
+    const el = document.getElementById('status-message');
+    el.innerText = msg; el.style.color = type === "error" ? "#ef4444" : "var(--text-muted)";
+}
+
+function setLoadingState(isLoading) {
+    const btn = document.getElementById('compare-btn');
+    const loader = document.getElementById('btn-loader'), text = document.getElementById('btn-text');
+    btn.disabled = isLoading;
+    if(isLoading) { loader.style.display = "block"; text.innerText = "ANALİZ EDİLİYOR..."; } 
+    else { loader.style.display = "none"; text.innerText = "İSTATİSTİKLERİ ÇARPIŞTIR"; }
+}
+
+function updateURL(n1, n2) {
+    const url = `?p1=${encodeURIComponent(n1)}&p2=${encodeURIComponent(n2)}`;
+    window.history.pushState({ path: url }, '', url);
 }
 </script>
 </body>
